@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Course of Empire</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#f7f5f2;--ink:#1a1a18;--mid:#8a8780;--accent:#c9a96e}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--ink);font-family:'Lato',sans-serif;font-weight:300;min-height:100vh}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.6rem 3rem;background:var(--bg);border-bottom:1px solid transparent;transition:border-color .3s}
+    nav.scrolled{border-color:rgba(26,26,24,.1)}
+    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);text-decoration:none}
+    .nav-sub{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
+    header{max-width:700px;padding:13rem 3rem 5rem;animation:fadeUp .9s ease both}
+    header h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.8rem,6vw,5rem);font-weight:300;line-height:1.08}
+    header h1 em{font-style:italic;color:var(--accent)}
+    header p{margin-top:1.5rem;font-size:.88rem;letter-spacing:.05em;color:var(--mid);line-height:1.9;max-width:420px}
+    .hero-rule{width:2.5rem;height:1px;background:var(--accent);margin-top:2.2rem}
+    .series{max-width:860px;margin:0 auto;padding:2rem 3rem 8rem}
+    .painting{margin-bottom:0;opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}
+    .painting.visible{opacity:1;transform:translateY(0)}
+    .painting-number{font-family:'Cormorant Garamond',serif;font-size:.78rem;font-style:italic;letter-spacing:.12em;color:var(--accent);margin-bottom:1rem}
+    .img-wrap{background:#e8e5e0;position:relative;overflow:hidden}
+    .img-wrap::before{content:'';display:block;padding-top:62%}
+    .img-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;cursor:zoom-in;transition:transform .5s ease;display:block}
+    .img-wrap img:hover{transform:scale(1.01)}
+    .img-wrap.loaded::before{display:none}
+    .img-wrap.loaded img{position:static;height:auto;object-fit:unset}
+    .painting-info{padding-top:1.4rem;border-top:1px solid rgba(26,26,24,.1);display:grid;grid-template-columns:1fr auto;gap:.4rem 2rem;align-items:start}
+    .painting-title{font-family:'Cormorant Garamond',serif;font-size:1.55rem;font-weight:300;line-height:1.15;grid-column:1}
+    .painting-year{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);grid-column:2;padding-top:.35rem;white-space:nowrap}
+    .painting-desc{font-size:.84rem;line-height:1.95;color:var(--mid);grid-column:1/-1;margin-top:.3rem;max-width:600px}
+    .series-divider{text-align:center;color:rgba(26,26,24,.18);letter-spacing:.4em;font-size:.75rem;padding:5rem 0}
+    .lightbox{display:none;position:fixed;inset:0;z-index:200;background:rgba(26,26,24,.93);align-items:center;justify-content:center;padding:2rem;cursor:zoom-out}
+    .lightbox.open{display:flex;animation:fadeIn .25s ease}
+    .lightbox img{max-width:92vw;max-height:90vh;object-fit:contain;display:block;cursor:default}
+    .lb-close{position:fixed;top:1.5rem;right:2rem;background:none;border:none;font-size:1.6rem;color:rgba(255,255,255,.55);cursor:pointer;transition:color .2s;line-height:1}
+    .lb-close:hover{color:#fff}
+    footer{border-top:1px solid rgba(26,26,24,.1);padding:2rem 3rem;display:flex;justify-content:space-between;align-items:center}
+    footer span{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mid)}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @media(max-width:600px){nav{padding:1.2rem 1.4rem}.nav-sub{display:none}header{padding:9rem 1.4rem 3rem}.series{padding:1rem 1.4rem 5rem}footer{padding:1.6rem 1.4rem;flex-direction:column;gap:.5rem}}
+  </style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="#" class="nav-logo">The Course of Empire</a>
+  <span class="nav-sub">Thomas Cole &middot; 1833–1836</span>
+</nav>
+
+<header>
+  <h1>The Course of<br><em>Empire</em></h1>
+  <p>Five paintings by Thomas Cole tracing the arc of civilisation — from untamed wilderness to imperial glory, violent ruin, and silent desolation.</p>
+  <div class="hero-rule"></div>
+</header>
+
+<main class="series" id="series"></main>
+
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lb-close">&#x2715;</button>
+  <img id="lb-img" src="" alt=""/>
+</div>
+
+<footer>
+  <span>Thomas Cole &mdash; The Course of Empire, 1833–1836</span>
+  <span>New-York Historical Society</span>
+</footer>
+
+<script>
+const artworks = [
+  {
+    n:"I", title:"The Savage State", year:"1834",
+    desc:"A wild, untamed landscape at dawn — hunters move through primeval forest as a storm gathers. Nature reigns supreme, and humanity is but a small, vulnerable presence within it.",
+    src:"Savage.jpg"
+  },
+  {
+    n:"II", title:"The Arcadian or Pastoral State", year:"1834",
+    desc:"Morning calm. A shepherd tends his flock, a boy draws in the earth, an old man contemplates. Society has begun — simple, harmonious, and at peace with the land around it.",
+    src:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Cole_Thomas_The_Course_of_Empire_The_Arcadian_or_Pastoral_State_1836.jpg/1280px-Cole_Thomas_The_Course_of_Empire_The_Arcadian_or_Pastoral_State_1836.jpg"
+  },
+  {
+    n:"III", title:"The Consummation of Empire", year:"1836",
+    desc:"High noon and the height of power. A vast imperial city gleams in marble and gold, thronged with celebration. Cole fills every inch with grandeur — and with the seeds of its own destruction.",
+    src:"Consummation.jpg"
+  },
+  {
+    n:"IV", title:"Destruction", year:"1836",
+    desc:"The empire falls. Invaders pour through the city as it burns. Columns topple, bodies fill the water, the sky chokes with smoke. A terrible beauty — one of the most dramatic paintings of the 19th century.",
+    src:"Destruction.jpg"
+  },
+  {
+    n:"V", title:"Desolation", year:"1836",
+    desc:"Twilight. Centuries have passed. The ruins are silent, draped in vines, inhabited only by birds. Nature reclaims what civilisation built. The cycle is complete — and will begin again.",
+    src:"Desolation.jpg"
+  }
+];
+
+const series = document.getElementById('series');
+const lightbox = document.getElementById('lightbox');
+const lbImg = document.getElementById('lb-img');
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); observer.unobserve(e.target); }});
+}, {threshold:0.08});
+
+artworks.forEach((art, i) => {
+  const src = art.src;
+
+  const wrap = document.createElement('div');
+
+  if(i > 0){
+    const div = document.createElement('div');
+    div.className = 'series-divider';
+    div.textContent = '· · ·';
+    series.appendChild(div);
+  }
+
+  const el = document.createElement('article');
+  el.className = 'painting';
+  el.innerHTML = `
+    <div class="painting-number">No. ${art.n}</div>
+    <div class="img-wrap" id="wrap${i}">
+      <img src="${src}" alt="${art.title}" loading="lazy"/>
+    </div>
+    <div class="painting-info">
+      <div class="painting-title">${art.title}</div>
+      <div class="painting-year">${art.year}</div>
+      <div class="painting-desc">${art.desc}</div>
+    </div>`;
+
+  series.appendChild(el);
+
+  const img = el.querySelector('img');
+  const imgWrap = el.querySelector('.img-wrap');
+
+  img.addEventListener('load', () => imgWrap.classList.add('loaded'));
+  img.addEventListener('click', () => {
+    lbImg.src = src;
+    lbImg.alt = art.title;
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  });
+
+  observer.observe(el);
+});
+
+function closeLb(){ lightbox.classList.remove('open'); document.body.style.overflow=''; }
+document.getElementById('lb-close').addEventListener('click', closeLb);
+lightbox.addEventListener('click', e => { if(e.target===lightbox) closeLb(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeLb(); });
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', scrollY > 40);
+});
+</script>
+</body>
+</html>
